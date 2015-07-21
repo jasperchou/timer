@@ -1,76 +1,28 @@
-# dnsparser
-A custom dns parser for HTTP on iOS.
-
-##Notice
-The dns.plist is always need, don't remove it.
+# timer
+定时器,倒计时管理.周期执行，超时处理。服务器时间同步。
 
 ###Feature
-* default dns（host-ip）table, which have a weight
-* parse host and cache the ip
-* manage host-ip cache
+* 只维持一个定时器来实现：所有需要循环定时的操作；
+* 支持超时之后的处理；
+* 支持自动移除超时的obj；
+* 支持设置服务器时间,同步，
+	* 需要你实现定时校对，可避免本地时间被修改导致倒计时不准确的问题；
+	* 设置服务器时间后可以对服务器时钟进行本地模拟
+	* 快慢时钟，模拟用的是10秒一次的低频率时钟（即，一分钟定时器只执行6次来更新服务器时间），当有obj才使用高频率时钟
 
 
 todo：
 * I dont know now....Please give me some ideas.
 
-
-
-####Parser Host:
-
 ```objc
-
-    NSString *ip = [JPDNSParser ipSynParseWithHost:@"wechat.iduobao.net"];
-    NSLog(@"syn ip:%@", ip);
-    [JPDNSParser ipAsynParseWithHost:@"wechat.iduobao.net" withComplete:^(NSString *ip) {
-        NSLog(@"asyn ip:%@", ip);
+    /*
+     *可以网络获取服务器时间对manager进行设置先。
+     *当有设置服务器时间的时候会按照10秒一次的时间进行时钟，避免不必要的执行
+     */
+    NSTimeInterval delayInterval = [[NSDate date] timeIntervalSince1970] + 20;
+    [[JPTimeTickManager shareTickManager]addTimeTickLabel:self.timeL withExpiresTime:delayInterval prefix:@"我在倒计时: " withExpiresHandler:^(JPTimeTickObj *obj) {
+        NSLog(@"我是handler, obj:%@", obj);
     }];
-
-```
-
-
-####Make a request:
-
-
-```objc 
-    NSMutableURLRequest *req = [NSMutableURLRequest JPDNS_requestWithURL:[NSURL URLWithString:@"http://wechat.iduobao.net"]];
-    [NSURLConnection sendAsynchronousRequest:req queue:[NSOperationQueue mainQueue] completionHandler:^(NSURLResponse *response, NSData *data, NSError *connectionError) {
-        NSString *str = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-        NSLog(@"result:%@", str);
-    }];
-```
-
-
-####Change the default DNS Plist
-A host will have more than one ip, and every ip has a weight.You can change The dns.plist and it will be copy to the document path.
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<array>
-	<dict>
-		<key>wechat.iduobao.net</key>
-		<array>
-			<dict>
-				<key>w</key>
-				<string>10</string>
-				<key>ip</key>
-				<string>120.132.59.160</string>
-			</dict>
-		</array>
-	</dict>
-</array>
-</plist>
-
-```
-
-
-####Use JPDNSCache
-
-```objc
-- (void)saveIPToCache:(NSString*)ip withHost:(NSString*)host;
-///ip is nil -》delete all ips
-- (void)delHost:(NSString*)host withIP:(NSString*)ip;
 ```
 
 ##License
